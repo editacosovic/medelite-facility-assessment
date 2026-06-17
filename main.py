@@ -24,9 +24,10 @@ def fetch_facility(ccn):
 @app.route("/", methods=["GET", "POST"])
 def home():
     facility = None
+    action = None
 
     if request.method == "POST":
-        ccn = request.form["ccn"]
+        ccn = request.form.get("ccn")
 
         if not ccn:
             return render_template(
@@ -34,64 +35,58 @@ def home():
                 facility=None,
                 form=request.form,
                 error="Please enter a CCN before searching or generating a PDF."
-        )
+            )
 
-    name_override = request.form.get("name_override")
-    emr = request.form.get("emr")
-    current_census = request.form.get("current_census")
-    patient_type = request.form.get("patient_type")
-    medelite_history = request.form.get("medelite_history")
-    previous_coverage = request.form.get("previous_coverage")
-    previous_provider_performance = request.form.get("previous_provider_performance")
-    medical_coverage = request.form.get("medical_coverage")    
+        name_override = request.form.get("name_override")
+        emr = request.form.get("emr")
+        current_census = request.form.get("current_census")
+        patient_type = request.form.get("patient_type")
+        medelite_history = request.form.get("medelite_history")
+        previous_coverage = request.form.get("previous_coverage")
+        previous_provider_performance = request.form.get("previous_provider_performance")
+        medical_coverage = request.form.get("medical_coverage")
 
-    facility = fetch_facility(ccn)
+        facility = fetch_facility(ccn)
 
-    if facility is None:
+        if facility is None:
             return render_template(
                 "index.html",
                 facility=None,
                 form=request.form,
                 error=f"No facility found for CCN {ccn}. Please check the number and try again."
-    )
-
-    action = request.form.get("action")
-
-    today = datetime.now().strftime("%B %d, %Y")
-    
-    def text_or_default(value, default="Not Provided"):
-        return value if value else default
-
-
-    if facility and name_override:
-            facility["provider_name"] = name_override
-
-    if facility:
-            facility["emr"] = emr
-            facility["current_census"] = current_census
-            facility["patient_type"] = patient_type
-            facility["medelite_history"] = medelite_history
-
-            facility["state_abbrev"] = (
-                facility.get("provider_state")
-                or facility.get("state")
-                or facility.get("provider_state_abbreviation")
-                or ""
             )
 
-            facility["previous_coverage"] = previous_coverage
-            facility["previous_provider_performance"] = previous_provider_performance
-            facility["medical_coverage"] = medical_coverage
+        action = request.form.get("action")
+        today = datetime.now().strftime("%B %d, %Y")
 
-            if current_census:
-                occupancy = round(
-                    (float(current_census) / float(facility["number_of_certified_beds"])) * 100,
-                    1
-                )
-                facility["occupancy"] = occupancy
-            else:
-                facility["occupancy"] = ""
+        def text_or_default(value, default="Not Provided"):
+            return value if value else default
 
+        if name_override:
+            facility["provider_name"] = name_override
+
+        facility["emr"] = emr
+        facility["current_census"] = current_census
+        facility["patient_type"] = patient_type
+        facility["medelite_history"] = medelite_history
+        facility["previous_coverage"] = previous_coverage
+        facility["previous_provider_performance"] = previous_provider_performance
+        facility["medical_coverage"] = medical_coverage
+        facility["state_abbrev"] = (
+            facility.get("provider_state")
+            or facility.get("state")
+            or facility.get("provider_state_abbreviation")
+            or ""
+        )
+
+        if current_census:
+            occupancy = round(
+                (float(current_census) / float(facility["number_of_certified_beds"])) * 100,
+                1
+            )
+            facility["occupancy"] = occupancy
+        else:
+            facility["occupancy"] = ""
 
     if action == "pdf":
             pdf_buffer = BytesIO()
@@ -101,9 +96,6 @@ def home():
             today = datetime.now().strftime("%B %d, %Y")
 
             # Helpers
-            def text_or_default(value, default="Not Provided"):
-                return value if value else default
-
             def rating_stars(value):
                 rating = int(value) if value else 0
                 return "★" * rating + "☆" * (5 - rating)
