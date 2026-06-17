@@ -1,0 +1,5 @@
+Flask
+requests
+reportlab
+python-docx
+gunicorn
