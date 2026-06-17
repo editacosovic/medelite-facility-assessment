@@ -1,6 +1,5 @@
 # MedElite Facility Assessment Report Generator
-Edita Cosovic
-Brown University PLME Program
+Edita Cosovic, Brown University PLME Program
 
 
 This project was developed as part of the MedElite technical case study.
